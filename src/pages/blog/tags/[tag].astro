@@ -1,15 +1,37 @@
 ---
 import { getImage, Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import BaseHead from '../../../components/BaseHead.astro';
+import Footer from '../../../components/Footer.astro';
+import FormattedDate from '../../../components/FormattedDate.astro';
+import Header from '../../../components/Header.astro';
+import { SITE_TITLE } from '../../../consts';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+export async function getStaticPaths() {
+	const posts = await getCollection('blog');
+
+	// Collect all unique tags
+	const tags = new Set<string>();
+	for (const post of posts) {
+		for (const tag of post.data.tags ?? []) {
+			tags.add(tag);
+		}
+	}
+
+	return [...tags].map((tag) => {
+		const filtered = posts
+			.filter((post) => post.data.tags?.includes(tag))
+			.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+		return {
+			params: { tag },
+			props: { posts: filtered, tag },
+		};
+	});
+}
+
+const { posts, tag } = Astro.props;
+const pageTitle = `Posts tagged "${tag}" — ${SITE_TITLE}`;
+const pageDescription = `All blog posts tagged with "${tag}".`;
 const postsWithPlaceholders = await Promise.all(
 	posts.map(async (post) => ({
 		...post,
@@ -29,10 +51,19 @@ const postsWithPlaceholders = await Promise.all(
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead title={pageTitle} description={pageDescription} />
 		<style>
 			main {
 				width: 960px;
+			}
+			.tag-header {
+				margin-bottom: 2rem;
+			}
+			.tag-header h1 {
+				font-size: 2em;
+			}
+			.tag-header a {
+				font-size: 0.9em;
 			}
 			ul {
 				display: flex;
@@ -50,17 +81,6 @@ const postsWithPlaceholders = await Promise.all(
 			ul li * {
 				text-decoration: none;
 				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
 			}
 			ul li img {
 				display: block;
@@ -123,18 +143,16 @@ const postsWithPlaceholders = await Promise.all(
 					width: 100%;
 					text-align: center;
 				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
 			}
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main id="main-content">
+			<div class="tag-header">
+				<h1>Tag: {tag}</h1>
+				<a href="/blog/">&larr; All posts</a>
+			</div>
 			<section>
 				<ul>
 					{
@@ -153,7 +171,7 @@ const postsWithPlaceholders = await Promise.all(
 												sizes="(max-width: 720px) 100vw, 720px"
 												width={720}
 												height={360}
-												alt=""
+												alt={post.data.heroImageAlt || ''}
 												loading={index === 0 ? 'eager' : 'lazy'}
 												{...(index === 0 ? { fetchpriority: 'high' } : {})}
 											/>

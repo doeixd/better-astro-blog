@@ -1,0 +1,75 @@
+<div class="loading-indicator"></div>
+
+<style>
+	.loading-indicator {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: var(--accent, #2337ff);
+		transform: scaleX(0);
+		transform-origin: left;
+		opacity: 0;
+		transition: opacity 0.3s ease-out;
+		z-index: 10000;
+	}
+
+	.loading-indicator.loading {
+		opacity: 1;
+		animation: loading-pinball 1s ease-in-out infinite;
+	}
+
+	/* Pinball: expand from left, then collapse from right */
+	@keyframes loading-pinball {
+		0% {
+			transform: scaleX(0);
+			transform-origin: left;
+		}
+		50% {
+			transform: scaleX(0.5);
+			transform-origin: left;
+		}
+		51% {
+			transform: scaleX(0.5);
+			transform-origin: right;
+		}
+		100% {
+			transform: scaleX(0);
+			transform-origin: right;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.loading-indicator.loading {
+			animation: none;
+			transform: scaleX(1);
+		}
+	}
+</style>
+
+<script>
+	const indicator = document.querySelector('.loading-indicator') as HTMLElement;
+
+	if (indicator) {
+		document.addEventListener(
+			'astro:before-preparation',
+			() => {
+				document.documentElement.dataset.transitioning = 'true';
+				indicator.classList.add('loading');
+			},
+			{ passive: true }
+		);
+
+		document.addEventListener(
+			'astro:after-swap',
+			() => {
+				requestAnimationFrame(() => {
+					delete document.documentElement.dataset.transitioning;
+					indicator.classList.remove('loading');
+				});
+			},
+			{ passive: true }
+		);
+	}
+</script>

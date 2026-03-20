@@ -3,7 +3,8 @@ import { SITE_TITLE } from '../consts';
 import HeaderLink from './HeaderLink.astro';
 ---
 
-<header>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header style="view-transition-name: site-header;">
 	<nav>
 		<h2><a href="/">{SITE_TITLE}</a></h2>
 		<div class="internal-links">
@@ -42,7 +43,56 @@ import HeaderLink from './HeaderLink.astro';
 		</div>
 	</nav>
 </header>
+<script>
+	const isModifiedEvent = (event: MouseEvent) =>
+		event.defaultPrevented ||
+		event.button !== 0 ||
+		event.metaKey ||
+		event.ctrlKey ||
+		event.shiftKey ||
+		event.altKey;
+
+	document.addEventListener('mousedown', (event: MouseEvent) => {
+		if (isModifiedEvent(event)) {
+			return;
+		}
+
+		const target = event.target;
+		if (!(target instanceof Element)) {
+			return;
+		}
+
+		const anchor = target.closest('a[data-mousedown-nav]');
+		if (!(anchor instanceof HTMLAnchorElement)) {
+			return;
+		}
+
+		if (anchor.target && anchor.target !== '_self') {
+			return;
+		}
+
+		if (anchor.hasAttribute('download') || anchor.origin !== window.location.origin) {
+			return;
+		}
+
+		window.location.assign(anchor.href);
+	});
+</script>
 <style>
+	.skip-link {
+		position: absolute;
+		top: -100%;
+		left: 0;
+		background: var(--accent);
+		color: white;
+		padding: 0.5em 1em;
+		z-index: 10001;
+		text-decoration: none;
+		font-weight: 700;
+	}
+	.skip-link:focus {
+		top: 0;
+	}
 	header {
 		margin: 0;
 		padding: 0 1em;

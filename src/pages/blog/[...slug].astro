@@ -13,8 +13,12 @@ type Props = CollectionEntry<'blog'>;
 
 const post = Astro.props;
 const { Content } = await render(post);
+
+// Calculate reading time from raw markdown body
+const words = post.body?.split(/\s+/).length ?? 0;
+const readingTime = Math.max(1, Math.ceil(words / 200));
 ---
 
-<BlogPost {...post.data}>
+<BlogPost {...post.data} readingTime={readingTime} wordCount={words}>
 	<Content />
 </BlogPost>
