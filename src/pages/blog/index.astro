@@ -34,6 +34,10 @@ const postsWithPlaceholders = await Promise.all(
 		imageTransitionName: `post-image-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
 	})),
 );
+const aboveTheFoldPreloads = postsWithPlaceholders
+	.slice(0, 4)
+	.map((post) => post.heroPreload)
+	.filter((image) => image !== null);
 
 /* ── Inline style constants (literal values to prevent FOUC) ── */
 const TEXT_PADDING = '1.5px';
@@ -58,6 +62,9 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 <html lang="en">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		{aboveTheFoldPreloads.map((image) => (
+			<link rel="preload" as="image" href={image.src} type="image/webp" fetchpriority="high" />
+		))}
 		<style>
 			/* ── Tokens ── */
 			:root {
@@ -192,17 +199,17 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 												class="card-media"
 												style={`--card-placeholder-url:${post.heroPlaceholder ? `url(${post.heroPlaceholder.src})` : 'none'};--card-aspect-ratio:${post.data.heroImage.width} / ${post.data.heroImage.height};view-transition-name:${post.imageTransitionName};`}
 											>
-												<Picture
-													src={post.data.heroImage}
-													formats={['webp', 'avif']}
-													widths={[360, 720]}
-													sizes="(max-width: 720px) 100vw, 720px"
-													width={720}
-													height={360}
-													alt=""
-													loading={featured ? 'eager' : 'lazy'}
-													{...(featured ? { fetchpriority: 'high' } : {})}
-												/>
+										<Picture
+											src={post.data.heroImage}
+											formats={['webp', 'avif']}
+											widths={[360, 720]}
+											sizes="(max-width: 720px) 100vw, 720px"
+											width={720}
+											height={360}
+											alt=""
+											loading={index < 4 ? 'eager' : 'lazy'}
+											{...(index < 4 ? { fetchpriority: 'high' } : {})}
+										/>
 											</div>
 										)}
 										<div class="card-text" style={cardTextStyle(featured)}>
