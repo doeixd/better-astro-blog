@@ -2,19 +2,20 @@
   "name": "Patrick's Blog",
   "short_name": "Blog",
   "description": "Patrick's personal blog",
-  "start_url": "/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2337ff",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.ico",
+      "src": "favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
     }

@@ -2,6 +2,8 @@ import { getCollection } from 'astro:content';
 import rss from '@astrojs/rss';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
+const basePath = import.meta.env.BASE_URL;
+
 export async function GET(context) {
 	const posts = await getCollection('blog');
 	return rss({
@@ -19,7 +21,7 @@ export async function GET(context) {
 				title: post.data.title,
 				description: post.data.description,
 				pubDate: post.data.pubDate,
-				link: `/blog/${post.id}/`,
+				link: `${basePath}blog/${post.id}/`,
 				categories: post.data.tags || [],
 				...(post.data.author && { author: post.data.author }),
 			})),

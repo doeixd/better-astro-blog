@@ -7,6 +7,8 @@ import FormattedDate from '../../../components/FormattedDate.astro';
 import Header from '../../../components/Header.astro';
 import { SITE_TITLE } from '../../../consts';
 
+const basePath = import.meta.env.BASE_URL;
+
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
 
@@ -196,14 +198,14 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 		<main id="main-content">
 			<div class="tag-header">
 				<h1>Tag: {tag}</h1>
-				<a href="/blog/">&larr; All posts</a>
+				<a href={`${basePath}blog/`}>&larr; All posts</a>
 			</div>
 			<section>
 				<ul class="card-grid">
 					{
 						postsWithPlaceholders.map((post, index) => (
 							<li>
-								<a href={`/blog/${post.id}/`} data-mousedown-nav data-hero-preload={post.heroPreload?.src}>
+								<a href={`${basePath}blog/${post.id}/`} data-mousedown-nav data-hero-preload={post.heroPreload?.src}>
 									{post.data.heroImage && (
 										<div
 											class="card-media"

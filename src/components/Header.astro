@@ -1,16 +1,18 @@
 ---
 import { SITE_TITLE } from '../consts';
 import HeaderLink from './HeaderLink.astro';
+
+const basePath = import.meta.env.BASE_URL;
 ---
 
 <a class="skip-link" href="#main-content">Skip to content</a>
 <header style="view-transition-name: site-header;">
 	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
+		<h2><a href={basePath}>{SITE_TITLE}</a></h2>
 		<div class="internal-links">
-			<HeaderLink href="/">Home</HeaderLink>
-			<HeaderLink href="/blog">Blog</HeaderLink>
-			<HeaderLink href="/about">About</HeaderLink>
+			<HeaderLink href={basePath}>Home</HeaderLink>
+			<HeaderLink href={`${basePath}blog`}>Blog</HeaderLink>
+			<HeaderLink href={`${basePath}about`}>About</HeaderLink>
 		</div>
 		<div class="social-links">
 			<a href="https://m.webtoo.ls/@astro" target="_blank">

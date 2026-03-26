@@ -41,6 +41,8 @@ const {
 	noindex = false,
 } = Astro.props;
 
+const basePath = import.meta.env.BASE_URL;
+const assetPath = (path: string) => `${basePath}${path.replace(/^\/+/, '')}`;
 const imageURL = ogImageUrl ? new URL(ogImageUrl, Astro.site) : new URL(image.src, Astro.site);
 const resolvedAuthor = author || AUTHOR_NAME;
 ---
@@ -48,14 +50,14 @@ const resolvedAuthor = author || AUTHOR_NAME;
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" href="/favicon.ico" />
-<link rel="sitemap" href="/sitemap-index.xml" />
+<link rel="icon" type="image/svg+xml" href={assetPath('favicon.svg')} />
+<link rel="icon" href={assetPath('favicon.ico')} />
+<link rel="sitemap" href={assetPath('sitemap-index.xml')} />
 <link
 	rel="alternate"
 	type="application/rss+xml"
 	title={SITE_TITLE}
-	href={new URL('rss.xml', Astro.site)}
+	href={new URL(assetPath('rss.xml'), Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
 
@@ -67,9 +69,9 @@ const resolvedAuthor = author || AUTHOR_NAME;
      after every page swap performed by ClientRouter. -->
 
 <!-- Service Worker Registration -->
-<script>
+<script define:vars={{ basePath }}>
 	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/sw.js').then((registration) => {
+		navigator.serviceWorker.register(`${basePath}sw.js`).then((registration) => {
 			registration.addEventListener('updatefound', () => {
 				const newWorker = registration.installing;
 				if (newWorker) {
@@ -85,7 +87,7 @@ const resolvedAuthor = author || AUTHOR_NAME;
 </script>
 
 <!-- PWA / theme -->
-<link rel="manifest" href="/manifest.json" />
+<link rel="manifest" href={assetPath('manifest.json')} />
 <meta name="theme-color" content="#2337ff" />
 
 <!-- Fonts (managed by Astro Fonts API) -->

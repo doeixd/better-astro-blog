@@ -7,6 +7,8 @@ import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
+const basePath = import.meta.env.BASE_URL;
+
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
@@ -184,7 +186,7 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 									class={featured ? 'featured' : undefined}
 									style={featured ? 'width:100%;margin-bottom:1rem;' : undefined}
 								>
-									<a href={`/blog/${post.id}/`} data-mousedown-nav data-hero-preload={post.heroPreload?.src}>
+									<a href={`${basePath}blog/${post.id}/`} data-mousedown-nav data-hero-preload={post.heroPreload?.src}>
 										{post.data.heroImage && (
 											<div
 												class="card-media"

@@ -4,9 +4,11 @@ const NAV_CACHE = `blog-nav-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `blog-dynamic-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = /\.(woff2?|ttf|svg|png|jpg|jpeg|gif|css|js)$/i;
-const STATIC_PATH = /^\/_astro\//;
+const scopePath = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+const STATIC_PATH = new RegExp(`^${scopePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/_astro/`);
+const scopedPath = (path = '') => `${scopePath}${path}` || '/';
 
-const SHELL_PAGES = ['/', '/blog/', '/about/', '/404/'];
+const SHELL_PAGES = ['/', '/blog/', '/about/', '/404/'].map((path) => scopedPath(path));
 
 // Install: pre-cache shell pages so the site works offline on first visit
 self.addEventListener('install', (event) => {
@@ -47,7 +49,7 @@ self.addEventListener('fetch', (event) => {
 	}
 
 	// Service worker itself: no cache
-	if (url.pathname === '/sw.js') {
+	if (url.pathname === scopedPath('/sw.js')) {
 		event.respondWith(fetch(request));
 		return;
 	}
@@ -120,6 +122,6 @@ async function networkFirst(request, cacheName) {
 // Offline fallback: serve the cached 404 page
 async function offlineFallback() {
 	const cache = await caches.open(NAV_CACHE);
-	const fallback = await cache.match('/404/');
+	const fallback = await cache.match(scopedPath('/404/'));
 	return fallback || new Response('Offline', { status: 503 });
 }

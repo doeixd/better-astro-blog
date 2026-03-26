@@ -2,10 +2,13 @@
 
 `better-astro-blog` is an Astro blog template that upgrades the default starter with snappier navigation, stronger SEO metadata, and polished post sharing.
 
+Live demo: `https://doeixd.github.io/better-astro-blog/`
+
 ## Use This Template
 
 - Click "Use this template" on GitHub to create your own repo from `doeixd/better-astro-blog`
 - Or clone it locally and start customizing right away
+- GitHub Pages publishing is included via `.github/workflows/deploy.yml`
 
 ## Highlights
 
