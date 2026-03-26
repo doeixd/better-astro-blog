@@ -1,9 +1,11 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { getCollection } from 'astro:content';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
 import satori from 'satori';
+import sharp from 'sharp';
 import { SITE_TITLE, AUTHOR_NAME } from '../../consts';
 
 const fontRegular = readFileSync(
@@ -13,23 +15,51 @@ const fontBold = readFileSync(
 	join(process.cwd(), 'public/fonts/atkinson-bold.woff')
 );
 
+const contentDir = join(process.cwd(), 'src/content/blog');
+
+async function getHeroBase64(postId: string): Promise<string | null> {
+	// Try both .md and .mdx extensions
+	for (const ext of ['.md', '.mdx']) {
+		const filePath = join(contentDir, `${postId}${ext}`);
+		if (!existsSync(filePath)) continue;
+
+		const raw = readFileSync(filePath, 'utf-8');
+		const match = raw.match(/heroImage:\s*['"]([^'"]+)['"]/);
+		if (!match) return null;
+
+		const imagePath = resolve(dirname(filePath), match[1]);
+		if (!existsSync(imagePath)) return null;
+
+		const buf = await sharp(imagePath)
+			.resize(1200, 630, { fit: 'cover' })
+			.jpeg({ quality: 80 })
+			.toBuffer();
+		return `data:image/jpeg;base64,${buf.toString('base64')}`;
+	}
+	return null;
+}
+
 export const getStaticPaths: GetStaticPaths = async () => {
 	const posts = await getCollection('blog');
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: {
-			title: post.data.title,
-			description: post.data.description,
-			pubDate: post.data.pubDate,
-			tags: post.data.tags ?? [],
-			author: post.data.author || AUTHOR_NAME,
-			category: post.data.category,
-		},
-	}));
+	return Promise.all(
+		posts.map(async (post) => ({
+			params: { slug: post.id },
+			props: {
+				title: post.data.title,
+				subtitle: post.data.subtitle,
+				description: post.data.description,
+				pubDate: post.data.pubDate,
+				tags: post.data.tags ?? [],
+				author: post.data.author || AUTHOR_NAME,
+				category: post.data.category,
+				heroBase64: await getHeroBase64(post.id),
+			},
+		}))
+	);
 };
 
 export const GET: APIRoute = async ({ props }) => {
-	const { title, description, pubDate, tags, author, category } = props;
+	const { title, subtitle, description, pubDate, tags, author, category, heroBase64 } = props;
 
 	const date = new Date(pubDate).toLocaleDateString('en-US', {
 		year: 'numeric',
@@ -53,6 +83,40 @@ export const GET: APIRoute = async ({ props }) => {
 					overflow: 'hidden',
 				},
 				children: [
+					// Hero image background (if available)
+					...(heroBase64
+						? [
+								{
+									type: 'img',
+									props: {
+										src: heroBase64,
+										style: {
+											position: 'absolute',
+											top: '0',
+											left: '0',
+											width: '1200px',
+											height: '630px',
+											objectFit: 'cover' as const,
+										},
+									},
+								},
+								// Dark overlay for text readability
+								{
+									type: 'div',
+									props: {
+										style: {
+											position: 'absolute',
+											top: '0',
+											left: '0',
+											width: '1200px',
+											height: '630px',
+											background:
+												'linear-gradient(135deg, rgba(10,14,24,0.93) 0%, rgba(15,18,25,0.88) 40%, rgba(13,27,62,0.82) 70%, rgba(10,14,24,0.75) 100%)',
+										},
+									},
+								},
+						  ]
+						: []),
 					// Decorative top accent bar
 					{
 						type: 'div',
@@ -147,9 +211,9 @@ export const GET: APIRoute = async ({ props }) => {
 												type: 'div',
 												props: {
 													style: {
-														background: 'rgba(255,255,255,0.06)',
-														border: '1px solid rgba(255,255,255,0.1)',
-														color: 'rgba(255,255,255,0.5)',
+														background: 'rgba(255,255,255,0.08)',
+														border: '1px solid rgba(255,255,255,0.15)',
+														color: 'rgba(255,255,255,0.6)',
 														padding: '6px 14px',
 														borderRadius: '20px',
 														fontSize: '14px',
@@ -176,7 +240,7 @@ export const GET: APIRoute = async ({ props }) => {
 												type: 'div',
 												props: {
 													style: {
-														fontSize: title.length > 50 ? '40px' : title.length > 30 ? '48px' : '56px',
+														fontSize: title.length > 50 ? '44px' : title.length > 30 ? '52px' : '62px',
 														fontWeight: '700',
 														color: '#ffffff',
 														lineHeight: '1.15',
@@ -186,21 +250,40 @@ export const GET: APIRoute = async ({ props }) => {
 													children: title,
 												},
 											},
-											{
-												type: 'div',
-												props: {
-													style: {
-														fontSize: '20px',
-														color: 'rgba(255,255,255,0.45)',
-														lineHeight: '1.5',
-														maxWidth: '750px',
-													},
-													children:
-														description.length > 120
-															? description.slice(0, 117) + '...'
-															: description,
-												},
-											},
+											...(subtitle
+												? [
+														{
+															type: 'div',
+															props: {
+																style: {
+																	fontSize: '26px',
+																	fontWeight: '400',
+																	color: 'rgba(255,255,255,0.7)',
+																	lineHeight: '1.4',
+																	fontStyle: 'italic' as const,
+																	maxWidth: '800px',
+																},
+																children: subtitle,
+															},
+														},
+												  ]
+												: [
+														{
+															type: 'div',
+															props: {
+																style: {
+																	fontSize: '22px',
+																	color: 'rgba(255,255,255,0.7)',
+																	lineHeight: '1.5',
+																	maxWidth: '750px',
+																},
+																children:
+																	description.length > 120
+																		? description.slice(0, 117) + '...'
+																		: description,
+															},
+														},
+												  ]),
 										],
 									},
 								},
@@ -229,8 +312,8 @@ export const GET: APIRoute = async ({ props }) => {
 															type: 'div',
 															props: {
 																style: {
-																	width: '44px',
-																	height: '44px',
+																	width: '48px',
+																	height: '48px',
 																	borderRadius: '50%',
 																	background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
 																	display: 'flex',
@@ -256,9 +339,9 @@ export const GET: APIRoute = async ({ props }) => {
 																		type: 'div',
 																		props: {
 																			style: {
-																				fontSize: '18px',
+																				fontSize: '20px',
 																				fontWeight: '700',
-																				color: 'rgba(255,255,255,0.85)',
+																				color: '#ffffff',
 																			},
 																			children: author,
 																		},
@@ -267,8 +350,8 @@ export const GET: APIRoute = async ({ props }) => {
 																		type: 'div',
 																		props: {
 																			style: {
-																				fontSize: '15px',
-																				color: 'rgba(255,255,255,0.4)',
+																				fontSize: '16px',
+																				color: 'rgba(255,255,255,0.65)',
 																			},
 																			children: date,
 																		},
@@ -284,9 +367,9 @@ export const GET: APIRoute = async ({ props }) => {
 												type: 'div',
 												props: {
 													style: {
-														fontSize: '18px',
+														fontSize: '20px',
 														fontWeight: '700',
-														color: 'rgba(255,255,255,0.3)',
+														color: 'rgba(255,255,255,0.55)',
 														letterSpacing: '0.02em',
 													},
 													children: SITE_TITLE,

@@ -15,6 +15,7 @@ type Props = CollectionEntry<'blog'>['data'] & {
 
 const {
 	title,
+	subtitle,
 	description,
 	pubDate,
 	updatedDate,
@@ -43,7 +44,7 @@ const heroPreload = heroImage
 	? await getImage({
 			src: heroImage,
 			width: Math.min(heroDisplayWidth, 720),
-			format: 'avif',
+			format: 'webp',
 			quality: 75,
 		})
 	: null;
@@ -66,6 +67,7 @@ const jsonLd = {
 		'@id': Astro.url.toString(),
 	},
 	headline: title,
+	...(subtitle && { alternativeHeadline: subtitle }),
 	description,
 	datePublished: pubDate.toISOString(),
 	...(updatedDate && { dateModified: updatedDate.toISOString() }),
@@ -141,7 +143,7 @@ const breadcrumbLd = {
 			tags={tags}
 			category={category}
 		/>
-		{heroPreload && <link rel="preload" as="image" href={heroPreload.src} type="image/avif" fetchpriority="high" />}
+		{heroPreload && <link rel="preload" as="image" href={heroPreload.src} type="image/webp" fetchpriority="high" />}
 		<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 		<script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
 		<style>
@@ -190,18 +192,13 @@ const breadcrumbLd = {
 				box-shadow: var(--box-shadow);
 				width: 100%;
 				height: auto;
-				animation: hero-image-in 300ms ease-out;
-				animation-fill-mode: both;
+				opacity: 0;
+				transform: scale(1.01);
+				transition: opacity 300ms ease-out, transform 300ms ease-out;
 			}
-			@keyframes hero-image-in {
-				from {
-					opacity: 0;
-					transform: scale(1.01);
-				}
-				to {
-					opacity: 1;
-					transform: scale(1);
-				}
+			.hero-image > :global(picture) > :global(img.loaded) {
+				opacity: 1;
+				transform: scale(1);
 			}
 			.prose {
 				width: var(--post-width);
@@ -263,6 +260,12 @@ const breadcrumbLd = {
 			.title h1 {
 				margin: 0 0 0.5em 0;
 			}
+			.subtitle {
+				margin: -0.25em 0 0.75em;
+				font-size: 1.25rem;
+				color: rgb(var(--gray));
+				font-style: italic;
+			}
 			.date {
 				margin-bottom: 0.5em;
 				color: rgb(var(--gray));
@@ -301,6 +304,16 @@ const breadcrumbLd = {
 			}
 		</style>
 		<script>
+			document.querySelectorAll('.hero-image img').forEach((img) => {
+				if (img instanceof HTMLImageElement && img.complete) {
+					img.classList.add('loaded');
+				} else {
+					img.addEventListener('load', (e) => {
+						(e.target as HTMLElement).classList.add('loaded');
+					}, { once: true });
+				}
+			});
+
 			const updateArticleScrollFade = () => {
 				const prose = document.querySelector('.prose');
 				if (!(prose instanceof HTMLElement)) {
@@ -334,13 +347,14 @@ const breadcrumbLd = {
 				>
 					{heroImage && <Picture
 					src={heroImage}
-					formats={['avif', 'webp']}
+					formats={['webp', 'avif']}
 					widths={heroWidths}
 					sizes={`(max-width: 760px) calc(100vw - 2rem), ${heroDisplayWidth}px`}
 					width={heroImage.width}
 					height={heroImage.height}
 					alt={heroImageAlt}
 					loading="eager"
+					decoding="sync"
 					fetchpriority="high"
 				/>}
 				</div>
@@ -358,6 +372,7 @@ const breadcrumbLd = {
 							}
 						</div>
 						<h1>{title}</h1>
+						{subtitle && <p class="subtitle">{subtitle}</p>}
 						{tags.length > 0 && (
 							<div class="tags">
 								{tags.map((tag) => (

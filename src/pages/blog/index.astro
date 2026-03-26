@@ -21,9 +21,35 @@ const postsWithPlaceholders = await Promise.all(
 					quality: 30,
 				})
 			: null,
+		heroPreload: post.data.heroImage
+			? await getImage({
+					src: post.data.heroImage,
+					width: Math.min(post.data.heroImage.width, 720),
+					format: 'webp',
+					quality: 75,
+				})
+			: null,
 		imageTransitionName: `post-image-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
 	})),
 );
+
+/* ── Inline style constants (literal values to prevent FOUC) ── */
+const TEXT_PADDING = '1.5px';
+const FEATURED_TEXT_PADDING = '4px';
+const TITLE_SIZE = '1.563em';
+const FEATURED_TITLE_SIZE = '2.369rem';
+
+const cardTextStyle = (featured: boolean) =>
+	`display:block;padding:${featured ? FEATURED_TEXT_PADDING : TEXT_PADDING} ${featured ? FEATURED_TEXT_PADDING : TEXT_PADDING} 0;`;
+
+const titleRowStyle = 'display:flex;justify-content:space-between;align-items:baseline;gap:0.5em;';
+
+const titleStyle = (featured: boolean) =>
+	`margin:0;line-height:1;font-size:${featured ? FEATURED_TITLE_SIZE : TITLE_SIZE};`;
+
+const dateStyle = 'margin:0;white-space:nowrap;font-size:0.8em;';
+
+const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 ---
 
 <!doctype html>
@@ -31,64 +57,68 @@ const postsWithPlaceholders = await Promise.all(
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
-			main {
-				width: 960px;
+			/* ── Tokens ── */
+			:root {
+				--card-grid-width: 960px;
+				--card-grid-gap: 2rem;
+				--card-radius: 12px;
+				--card-blur: 22px;
+				--card-title-max: 26ch;
 			}
-			ul {
+
+			/* ── Page ── */
+			main {
+				width: var(--card-grid-width);
+			}
+
+			/* ── Grid ── */
+			.card-grid {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
+				gap: var(--card-grid-gap);
+				list-style: none;
 				margin: 0;
 				padding: 0;
 			}
-			ul li {
-				width: calc(50% - 1rem);
-				content-visibility: auto;
-				contain-intrinsic-size: 0 300px;
+			.card-grid > li {
+				width: calc(50% - var(--card-grid-gap) / 2);
+				min-width: 0;
 			}
-			ul li * {
+
+			/* ── Link reset ── */
+			.card-grid a {
+				display: block;
 				text-decoration: none;
-				transition: 0.2s ease;
+				color: inherit;
 			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
+
+			/* ── Hover ── */
+			.card-grid a:hover .title,
+			.card-grid a:hover .date {
+				color: rgb(var(--accent));
 			}
-			ul li:first-child img {
-				width: 100%;
+			.card-grid a:hover .card-media {
+				box-shadow: var(--box-shadow);
 			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				display: block;
-				width: 100%;
-				height: auto;
-				margin-bottom: 0.5rem;
-				position: relative;
-				z-index: 1;
-			}
-			ul li a {
-				display: block;
-			}
+
+			/* ── Card image ── */
 			.card-media {
 				aspect-ratio: var(--card-aspect-ratio, 2 / 1);
 				background:
 					linear-gradient(135deg, rgba(var(--gray-light), 0.9), rgba(var(--gray), 0.18)),
-					var(--card-placeholder-url, none) center/cover no-repeat;
-				border-radius: 12px;
+					var(--card-placeholder-url, none) center / cover no-repeat;
+				border-radius: var(--card-radius);
 				overflow: hidden;
 				position: relative;
 				margin-bottom: 0.5rem;
+				transition: box-shadow 0.2s ease-out;
 			}
 			.card-media::before {
 				content: '';
 				position: absolute;
 				inset: 0;
-				background: var(--card-placeholder-url, none) center/cover no-repeat;
-				filter: blur(22px);
+				background: var(--card-placeholder-url, none) center / cover no-repeat;
+				filter: blur(var(--card-blur));
 				transform: scale(1.08);
 				opacity: 0.82;
 				z-index: 0;
@@ -98,36 +128,45 @@ const postsWithPlaceholders = await Promise.all(
 				position: relative;
 				z-index: 1;
 			}
+			.card-media img {
+				display: block;
+				width: 100%;
+				height: auto;
+			}
+
+			/* ── Card text (colors & overflow only — layout is inlined) ── */
 			.title {
-				margin: 0;
 				color: rgb(var(--black));
-				line-height: 1;
+				max-width: var(--card-title-max);
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.subtitle {
+				padding-left: 1px;
+				color: rgb(var(--gray));
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
 			.date {
-				margin: 0;
 				color: rgb(var(--gray));
+				flex-shrink: 0;
 			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover .card-media,
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
+
+			/* ── Mobile ── */
 			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
+				:root {
+					--card-grid-gap: 0.5em;
 				}
-				ul li {
+				.card-grid > li,
+				li.featured {
 					width: 100%;
-					text-align: center;
 				}
-				ul li:first-child {
+				li.featured {
 					margin-bottom: 0;
 				}
-				ul li:first-child .title {
-					font-size: 1.563em;
+				.subtitle {
+					white-space: normal;
 				}
 			}
 		</style>
@@ -136,40 +175,67 @@ const postsWithPlaceholders = await Promise.all(
 		<Header />
 		<main id="main-content">
 			<section>
-				<ul>
+				<ul class="card-grid">
 					{
-						postsWithPlaceholders.map((post, index) => (
-							<li>
-							<a href={`/blog/${post.id}/`} data-mousedown-nav>
-									{post.data.heroImage && (
-										<div
-											class="card-media"
-											style={`--card-placeholder-url: ${post.heroPlaceholder ? `url(${post.heroPlaceholder.src})` : 'none'}; --card-aspect-ratio: ${post.data.heroImage.width} / ${post.data.heroImage.height}; view-transition-name: ${post.imageTransitionName};`}
-										>
-											<Picture
-												src={post.data.heroImage}
-												formats={['avif', 'webp']}
-												widths={[360, 720]}
-												sizes="(max-width: 720px) 100vw, 720px"
-												width={720}
-												height={360}
-												alt=""
-												loading={index === 0 ? 'eager' : 'lazy'}
-												{...(index === 0 ? { fetchpriority: 'high' } : {})}
-											/>
+						postsWithPlaceholders.map((post, index) => {
+							const featured = index === 0;
+							return (
+								<li
+									class={featured ? 'featured' : undefined}
+									style={featured ? 'width:100%;margin-bottom:1rem;' : undefined}
+								>
+									<a href={`/blog/${post.id}/`} data-mousedown-nav data-hero-preload={post.heroPreload?.src}>
+										{post.data.heroImage && (
+											<div
+												class="card-media"
+												style={`--card-placeholder-url:${post.heroPlaceholder ? `url(${post.heroPlaceholder.src})` : 'none'};--card-aspect-ratio:${post.data.heroImage.width} / ${post.data.heroImage.height};view-transition-name:${post.imageTransitionName};`}
+											>
+												<Picture
+													src={post.data.heroImage}
+													formats={['webp', 'avif']}
+													widths={[360, 720]}
+													sizes="(max-width: 720px) 100vw, 720px"
+													width={720}
+													height={360}
+													alt=""
+													loading={featured ? 'eager' : 'lazy'}
+													{...(featured ? { fetchpriority: 'high' } : {})}
+												/>
+											</div>
+										)}
+										<div class="card-text" style={cardTextStyle(featured)}>
+											<div class="card-title-row" style={titleRowStyle}>
+												<h4 class="title" style={titleStyle(featured)}>{post.data.title}</h4>
+												<p class="date" style={dateStyle}>
+													<FormattedDate date={post.data.pubDate} short />
+												</p>
+											</div>
+											{post.data.subtitle && <p class="subtitle" style={subtitleStyle}>{post.data.subtitle}</p>}
 										</div>
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
+									</a>
+								</li>
+							);
+						})
 					}
 				</ul>
 			</section>
 		</main>
 		<Footer />
+		<script>
+			const preloaded = new Set<string>();
+			document.addEventListener('pointerenter', (e) => {
+				const anchor = (e.target as Element).closest?.('a[data-hero-preload]');
+				if (!(anchor instanceof HTMLAnchorElement)) return;
+				const src = anchor.dataset.heroPreload;
+				if (!src || preloaded.has(src)) return;
+				preloaded.add(src);
+				const link = document.createElement('link');
+				link.rel = 'preload';
+				link.as = 'image';
+				link.href = src;
+				link.type = 'image/webp';
+				document.head.appendChild(link);
+			}, true);
+		</script>
 	</body>
 </html>

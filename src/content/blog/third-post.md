@@ -1,5 +1,6 @@
 ---
 title: 'Third post'
+subtitle: 'Building on what we have learned so far'
 description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Jul 22 2022'
 heroImage: '../../assets/blog-placeholder-2.jpg'
