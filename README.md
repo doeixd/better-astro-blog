@@ -1,62 +1,88 @@
-# Astro Starter Kit: Blog
+# better-astro-blog
 
-```sh
-npm create astro@latest -- --template blog
-```
+`better-astro-blog` is an Astro blog template that upgrades the default starter with snappier navigation, stronger SEO metadata, and polished post sharing.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Use This Template
 
-Features:
+- Click "Use this template" on GitHub to create your own repo from `doeixd/better-astro-blog`
+- Or clone it locally and start customizing right away
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+## Highlights
 
-## 🚀 Project Structure
+- Faster navigation with Astro's client router, prefetching, and a lightweight loading indicator
+- Rich metadata with canonical tags, Open Graph, Twitter cards, article metadata, and JSON-LD
+- Generated per-post Open Graph images for better link previews
+- Service worker caching for quicker repeat visits and offline-friendly shell pages
+- Extended blog frontmatter for subtitles, tags, categories, authors, and updated dates
 
-Inside of your Astro project, you'll see the following folders and files:
+## What Changed
+
+- Faster page navigation with Astro's client router and aggressive prefetching
+- A lightweight loading indicator during client-side page swaps
+- Image preloading for featured post cards and post hero images
+- Service worker caching for shell pages, navigation, and static assets
+- Expanded metadata in the shared head component
+- Per-post Open Graph image generation at `src/pages/og/[slug].png.ts`
+- Article JSON-LD and breadcrumb JSON-LD for blog posts
+- Extra content fields for tags, category, subtitle, author, and updated date
+
+## Metadata Included
+
+This fork goes beyond the default template's basic SEO setup.
+
+- Canonical URLs
+- Open Graph tags
+- Twitter card tags
+- Article-specific Open Graph fields
+- `keywords` and `news_keywords`
+- Structured data for `BlogPosting` and breadcrumbs
+- RSS, sitemap, manifest, robots, and theme-color support
+
+## Project Structure
 
 ```text
 ├── public/
+│   ├── manifest.json
+│   ├── sw.js
+│   └── fonts/
 ├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
+│   ├── components/
+│   ├── content/
+│   ├── layouts/
+│   ├── pages/
+│   │   └── og/
+│   └── styles/
 ├── astro.config.mjs
-├── README.md
 ├── package.json
-└── tsconfig.json
+└── README.md
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Key Files
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- `src/components/BaseHead.astro` manages shared metadata, the client router, manifest links, and service worker registration
+- `src/layouts/BlogPost.astro` adds article metadata, JSON-LD, hero image preloading, and post-level OG image wiring
+- `src/pages/blog/index.astro` adds card image placeholders and hover-triggered image preloading
+- `src/content.config.ts` defines the extended blog frontmatter schema
+- `public/sw.js` handles offline-friendly caching strategies
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+## Commands
 
-Any static assets, like images, can be placed in the `public/` directory.
+| Command | Action |
+| :-- | :-- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Start the local dev server |
+| `npm run build` | Build the site into `dist/` |
+| `npm run preview` | Preview the production build locally |
+| `npm run astro -- --help` | Show Astro CLI help |
 
-## 🧞 Commands
+## Customize Before Deploying
 
-All commands are run from the root of the project, from a terminal:
+Update these placeholders first:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- `src/consts.ts` for site title, description, author, and social metadata
+- `astro.config.mjs` for the production `site` URL
+- `public/manifest.json` for your app name and description
 
 ## Credit
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+Based on Astro's default blog starter, which is itself inspired by [Bear Blog](https://github.com/HermanMartinus/bearblog/).
