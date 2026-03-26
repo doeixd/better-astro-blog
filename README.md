@@ -1,4 +1,4 @@
-# better-astro-blog
+# Better Astro Blog
 
 `better-astro-blog` is an Astro blog template that upgrades the default starter with snappier navigation, stronger SEO metadata, and polished post sharing.
 
