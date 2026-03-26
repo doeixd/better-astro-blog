@@ -8,7 +8,8 @@ const owner = process.env.GITHUB_REPOSITORY_OWNER;
 const repo = process.env.GITHUB_REPOSITORY?.split('/')[1];
 const isUserSite = owner && repo === `${owner}.github.io`;
 const site = process.env.SITE_URL || (owner ? `https://${owner}.github.io` : 'https://example.com');
-const base = process.env.BASE_PATH || (owner && repo && !isUserSite ? `/${repo}` : '/');
+const rawBase = process.env.BASE_PATH || (owner && repo && !isUserSite ? `/${repo}` : '/');
+const base = rawBase === '/' ? '/' : `/${rawBase.replace(/^\/+|\/+$/g, '')}/`;
 
 // https://astro.build/config
 export default defineConfig({

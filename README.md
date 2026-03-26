@@ -2,7 +2,7 @@
 
 `better-astro-blog` is an Astro blog template that upgrades the default starter with snappier navigation, stronger SEO metadata, and polished post sharing.
 
-Live demo: `https://doeixd.github.io/better-astro-blog/`
+Live demo: [https://doeixd.github.io/better-astro-blog/](https://doeixd.github.io/better-astro-blog/)
 
 ## Use This Template
 
