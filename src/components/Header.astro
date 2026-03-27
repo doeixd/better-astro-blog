@@ -68,6 +68,8 @@ const basePath = import.meta.env.BASE_URL;
 		return true;
 	};
 
+	let suppressClickForHref: string | null = null;
+
 	document.addEventListener('mousedown', (event: MouseEvent) => {
 		if (isModifiedEvent(event)) {
 			return;
@@ -83,7 +85,7 @@ const basePath = import.meta.env.BASE_URL;
 			return;
 		}
 
-		anchor.dataset.mouseDownNavigating = 'true';
+		suppressClickForHref = anchor.href;
 		navigate(anchor.href);
 	});
 
@@ -94,18 +96,16 @@ const basePath = import.meta.env.BASE_URL;
 		}
 
 		const anchor = target.closest('a[data-mousedown-nav]');
-		if (!(anchor instanceof HTMLAnchorElement) || anchor.dataset.mouseDownNavigating !== 'true') {
+		if (!(anchor instanceof HTMLAnchorElement) || suppressClickForHref !== anchor.href) {
 			return;
 		}
 
-		delete anchor.dataset.mouseDownNavigating;
+		suppressClickForHref = null;
 		event.preventDefault();
-	});
+	}, true);
 
 	window.addEventListener('pagehide', () => {
-		document
-			.querySelectorAll<HTMLAnchorElement>('a[data-mousedown-nav][data-mouse-down-navigating="true"]')
-			.forEach((anchor) => delete anchor.dataset.mouseDownNavigating);
+		suppressClickForHref = null;
 	});
 </script>
 <style>
