@@ -23,9 +23,6 @@ export default defineConfig({
 	build: {
 		inlineStylesheets: 'never',
 	},
-	security: {
-		csp: true,
-	},
 	experimental: {
 		clientPrerender: true,
 		rustCompiler: true,

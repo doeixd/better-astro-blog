@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `blog-static-${CACHE_VERSION}`;
 const NAV_CACHE = `blog-nav-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `blog-dynamic-${CACHE_VERSION}`;
@@ -8,12 +8,25 @@ const scopePath = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 const STATIC_PATH = new RegExp(`^${scopePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/_astro/`);
 const scopedPath = (path = '') => `${scopePath}${path}` || '/';
 
-const SHELL_PAGES = ['/', '/blog/', '/about/', '/404/'].map((path) => scopedPath(path));
+const SHELL_PAGES = ['/', '/blog/', '/about/', '/404.html'].map((path) => scopedPath(path));
 
 // Install: pre-cache shell pages so the site works offline on first visit
 self.addEventListener('install', (event) => {
 	event.waitUntil(
-		caches.open(NAV_CACHE).then((cache) => cache.addAll(SHELL_PAGES))
+		caches.open(NAV_CACHE).then(async (cache) => {
+			await Promise.all(
+				SHELL_PAGES.map(async (path) => {
+					try {
+						const response = await fetch(path, { cache: 'no-store' });
+						if (response.ok) {
+							await cache.put(path, response);
+						}
+					} catch {
+						// Ignore cache warm failures so the worker can still install.
+					}
+				})
+			);
+		})
 	);
 	self.skipWaiting();
 });
@@ -122,6 +135,6 @@ async function networkFirst(request, cacheName) {
 // Offline fallback: serve the cached 404 page
 async function offlineFallback() {
 	const cache = await caches.open(NAV_CACHE);
-	const fallback = await cache.match(scopedPath('/404/'));
+	const fallback = await cache.match(scopedPath('/404.html'));
 	return fallback || new Response('Offline', { status: 503 });
 }
