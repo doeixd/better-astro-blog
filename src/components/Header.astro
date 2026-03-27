@@ -155,9 +155,9 @@ const basePath = import.meta.env.BASE_URL;
 		justify-content: space-between;
 	}
 	nav a {
-		padding: 1em 0.5em;
+		padding: var(--nav-link-padding-block) var(--nav-link-padding-inline);
 		color: var(--black);
-		border-bottom: 4px solid transparent;
+		border-bottom: var(--nav-link-active-border-width) solid transparent;
 		text-decoration: none;
 	}
 	nav a.active {

@@ -17,6 +17,9 @@
 	--gray-gradient-inverse: var(--gray-gradient-end), var(--gray-gradient-start);
 	--header-background: transparent;
 	--header-box-shadow: none;
+	--nav-link-padding-block: 0.5em;
+	--nav-link-padding-inline: 0.5em;
+	--nav-link-active-border-width: 2px;
 	--box-shadow:
 		0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%),
 		0 16px 32px rgba(var(--gray), 33%);
@@ -30,6 +33,7 @@ body {
 	margin: 0;
 	padding: 0;
 	text-align: left;
+	accent-color: var(--accent);
 	background: linear-gradient(var(--gray-gradient)) no-repeat;
 	background-size: 100% 600px;
 	word-wrap: break-word;
@@ -37,6 +41,11 @@ body {
 	color: rgb(var(--gray-dark));
 	font-size: 20px;
 	line-height: 1.7;
+}
+
+::selection {
+	background: var(--highlight, var(--accent));
+	color: var(--highlight-textColor, inherit);
 }
 main {
 	width: 720px;
