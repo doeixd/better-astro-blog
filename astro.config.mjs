@@ -21,7 +21,7 @@ export default defineConfig({
 		defaultStrategy: 'viewport',
 	},
 	build: {
-		inlineStylesheets: 'always',
+		inlineStylesheets: 'never',
 	},
 	fonts: [
 		{

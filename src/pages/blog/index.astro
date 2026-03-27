@@ -32,6 +32,9 @@ const postsWithPlaceholders = await Promise.all(
 				})
 			: null,
 		imageTransitionName: `post-image-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
+		titleTransitionName: `post-title-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
+		subtitleTransitionName: `post-subtitle-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
+		dateTransitionName: `post-date-${post.id.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
 	})),
 );
 const aboveTheFoldPreloads = postsWithPlaceholders
@@ -214,13 +217,19 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 										)}
 										<div class="card-text" style={cardTextStyle(featured)}>
 											<div class="card-title-row" style={titleRowStyle}>
-												<h4 class="title" style={titleStyle(featured)}>{post.data.title}</h4>
-												<p class="date" style={dateStyle}>
-													<FormattedDate date={post.data.pubDate} short />
-												</p>
-											</div>
-											{post.data.subtitle && <p class="subtitle" style={subtitleStyle}>{post.data.subtitle}</p>}
-										</div>
+										<h4 class="title" style={`${titleStyle(featured)}view-transition-name:${post.titleTransitionName};`}>
+											{post.data.title}
+										</h4>
+										<p class="date" style={`${dateStyle}view-transition-name:${post.dateTransitionName};`}>
+											<FormattedDate date={post.data.pubDate} short />
+										</p>
+									</div>
+									{post.data.subtitle && (
+										<p class="subtitle" style={`${subtitleStyle}view-transition-name:${post.subtitleTransitionName};`}>
+											{post.data.subtitle}
+										</p>
+									)}
+								</div>
 									</a>
 								</li>
 							);

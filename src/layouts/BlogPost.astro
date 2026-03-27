@@ -32,6 +32,9 @@ const {
 
 const resolvedAuthor = author || AUTHOR_NAME;
 const heroTransitionName = `post-image-${slugifyForTransition(Astro.url.pathname)}`;
+const titleTransitionName = `post-title-${slugifyForTransition(Astro.url.pathname)}`;
+const subtitleTransitionName = `post-subtitle-${slugifyForTransition(Astro.url.pathname)}`;
+const dateTransitionName = `post-date-${slugifyForTransition(Astro.url.pathname)}`;
 const heroDisplayWidth = heroImage ? Math.min(heroImage.width, 980) : 980;
 const heroWidths = heroImage
     ? [480, 720, 980]
@@ -368,10 +371,22 @@ const breadcrumbLd = {
             }
         </style>
         <script>
-            document.querySelectorAll(".hero-image img").forEach((img) => {
-                if (img instanceof HTMLImageElement && img.complete) {
-                    img.classList.add("loaded");
-                } else {
+            const initializeHeroImages = () => {
+                document.querySelectorAll(".hero-image img").forEach((img) => {
+                    if (!(img instanceof HTMLImageElement)) {
+                        return;
+                    }
+
+                    if (img.complete) {
+                        img.classList.add("loaded");
+                        return;
+                    }
+
+                    if (img.dataset.heroImageBound === "true") {
+                        return;
+                    }
+
+                    img.dataset.heroImageBound = "true";
                     img.addEventListener(
                         "load",
                         (e) => {
@@ -379,8 +394,11 @@ const breadcrumbLd = {
                         },
                         { once: true },
                     );
-                }
-            });
+                });
+            };
+
+            initializeHeroImages();
+            document.addEventListener("astro:page-load", initializeHeroImages);
 
             const updateArticleScrollFade = () => {
                 const prose = document.querySelector(".prose");
@@ -441,7 +459,7 @@ const breadcrumbLd = {
                 </div>
                 <div class="prose">
                     <div class="title">
-                        <div class="date">
+                        <div class="date" style={`view-transition-name: ${dateTransitionName};`}>
                             <FormattedDate date={pubDate} />
                             {
                                 readingTime && (
@@ -460,8 +478,12 @@ const breadcrumbLd = {
                                 )
                             }
                         </div>
-                        <h1>{title}</h1>
-                        {subtitle && <p class="subtitle">{subtitle}</p>}
+                        <h1 style={`view-transition-name: ${titleTransitionName};`}>{title}</h1>
+                        {subtitle && (
+                            <p class="subtitle" style={`view-transition-name: ${subtitleTransitionName};`}>
+                                {subtitle}
+                            </p>
+                        )}
                         {
                             tags.length > 0 && (
                                 <div class="tags">
