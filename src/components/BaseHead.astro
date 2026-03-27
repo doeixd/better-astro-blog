@@ -3,7 +3,6 @@
 // all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
 import type { ImageMetadata } from 'astro';
-import { Font } from 'astro:assets';
 import FallbackImage from '../assets/blog-placeholder-1.jpg';
 import { SITE_TITLE, SITE_LOCALE, AUTHOR_NAME, TWITTER_HANDLE } from '../consts';
 import { ClientRouter } from 'astro:transitions';
@@ -70,7 +69,8 @@ const resolvedAuthor = author || AUTHOR_NAME;
 
 <!-- Service Worker Registration -->
 <script define:vars={{ basePath }}>
-	if ('serviceWorker' in navigator) {
+	if ('serviceWorker' in navigator && !window.__blogServiceWorkerRegistered) {
+		window.__blogServiceWorkerRegistered = true;
 		navigator.serviceWorker.register(`${basePath}sw.js`).then((registration) => {
 			registration.addEventListener('updatefound', () => {
 				const newWorker = registration.installing;
@@ -89,9 +89,6 @@ const resolvedAuthor = author || AUTHOR_NAME;
 <!-- PWA / theme -->
 <link rel="manifest" href={assetPath('manifest.json')} />
 <meta name="theme-color" content="#2337ff" />
-
-<!-- Fonts (managed by Astro Fonts API) -->
-<Font cssVariable="--font-atkinson" preload />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

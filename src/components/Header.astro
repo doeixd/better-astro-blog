@@ -46,8 +46,6 @@ const basePath = import.meta.env.BASE_URL;
 	</nav>
 </header>
 <script>
-	import { navigate } from 'astro:transitions/client';
-
 	const isModifiedEvent = (event: MouseEvent) =>
 		event.defaultPrevented ||
 		event.button !== 0 ||
@@ -68,9 +66,10 @@ const basePath = import.meta.env.BASE_URL;
 		return true;
 	};
 
-	let suppressClickForHref: string | null = null;
+	let pendingMouseDownAnchor: HTMLAnchorElement | null = null;
+	let syntheticClickInFlight = false;
 
-	document.addEventListener('mousedown', (event: MouseEvent) => {
+	document.addEventListener('pointerdown', (event: PointerEvent) => {
 		if (isModifiedEvent(event)) {
 			return;
 		}
@@ -85,8 +84,10 @@ const basePath = import.meta.env.BASE_URL;
 			return;
 		}
 
-		suppressClickForHref = anchor.href;
-		navigate(anchor.href);
+		pendingMouseDownAnchor = anchor;
+		syntheticClickInFlight = true;
+		anchor.click();
+		syntheticClickInFlight = false;
 	});
 
 	document.addEventListener('click', (event: MouseEvent) => {
@@ -96,16 +97,26 @@ const basePath = import.meta.env.BASE_URL;
 		}
 
 		const anchor = target.closest('a[data-mousedown-nav]');
-		if (!(anchor instanceof HTMLAnchorElement) || suppressClickForHref !== anchor.href) {
+		if (!(anchor instanceof HTMLAnchorElement) || anchor !== pendingMouseDownAnchor) {
 			return;
 		}
 
-		suppressClickForHref = null;
+		if (syntheticClickInFlight) {
+			return;
+		}
+
+		pendingMouseDownAnchor = null;
 		event.preventDefault();
 	}, true);
 
+	window.addEventListener('pointercancel', () => {
+		pendingMouseDownAnchor = null;
+		syntheticClickInFlight = false;
+	});
+
 	window.addEventListener('pagehide', () => {
-		suppressClickForHref = null;
+		pendingMouseDownAnchor = null;
+		syntheticClickInFlight = false;
 	});
 </script>
 <style>

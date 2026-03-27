@@ -2,7 +2,7 @@
 
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig } from 'astro/config';
 
 const owner = process.env.GITHUB_REPOSITORY_OWNER;
 const repo = process.env.GITHUB_REPOSITORY?.split('/')[1];
@@ -23,13 +23,6 @@ export default defineConfig({
 	build: {
 		inlineStylesheets: 'never',
 	},
-	fonts: [
-		{
-			name: 'Atkinson Hyperlegible',
-			cssVariable: '--font-atkinson',
-			provider: fontProviders.fontsource(),
-		},
-	],
 	security: {
 		csp: true,
 	},
