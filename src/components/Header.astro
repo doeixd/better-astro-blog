@@ -46,6 +46,8 @@ const basePath = import.meta.env.BASE_URL;
 	</nav>
 </header>
 <script>
+	import { navigate } from 'astro:transitions/client';
+
 	const isModifiedEvent = (event: MouseEvent) =>
 		event.defaultPrevented ||
 		event.button !== 0 ||
@@ -53,6 +55,18 @@ const basePath = import.meta.env.BASE_URL;
 		event.ctrlKey ||
 		event.shiftKey ||
 		event.altKey;
+
+	const shouldHandleMouseDownNav = (anchor: HTMLAnchorElement) => {
+		if (anchor.target && anchor.target !== '_self') {
+			return false;
+		}
+
+		if (anchor.hasAttribute('download') || anchor.origin !== window.location.origin) {
+			return false;
+		}
+
+		return true;
+	};
 
 	document.addEventListener('mousedown', (event: MouseEvent) => {
 		if (isModifiedEvent(event)) {
@@ -65,19 +79,33 @@ const basePath = import.meta.env.BASE_URL;
 		}
 
 		const anchor = target.closest('a[data-mousedown-nav]');
-		if (!(anchor instanceof HTMLAnchorElement)) {
+		if (!(anchor instanceof HTMLAnchorElement) || !shouldHandleMouseDownNav(anchor)) {
 			return;
 		}
 
-		if (anchor.target && anchor.target !== '_self') {
+		anchor.dataset.mouseDownNavigating = 'true';
+		navigate(anchor.href);
+	});
+
+	document.addEventListener('click', (event: MouseEvent) => {
+		const target = event.target;
+		if (!(target instanceof Element)) {
 			return;
 		}
 
-		if (anchor.hasAttribute('download') || anchor.origin !== window.location.origin) {
+		const anchor = target.closest('a[data-mousedown-nav]');
+		if (!(anchor instanceof HTMLAnchorElement) || anchor.dataset.mouseDownNavigating !== 'true') {
 			return;
 		}
 
-		window.location.assign(anchor.href);
+		delete anchor.dataset.mouseDownNavigating;
+		event.preventDefault();
+	});
+
+	window.addEventListener('pagehide', () => {
+		document
+			.querySelectorAll<HTMLAnchorElement>('a[data-mousedown-nav][data-mouse-down-navigating="true"]')
+			.forEach((anchor) => delete anchor.dataset.mouseDownNavigating);
 	});
 </script>
 <style>
