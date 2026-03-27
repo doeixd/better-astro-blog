@@ -13,7 +13,7 @@ const websiteLd = {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:name="root" transition:animate="none">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
