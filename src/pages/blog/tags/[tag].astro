@@ -236,15 +236,20 @@ const subtitleStyle = 'margin:0.25em 0 0;font-style:italic;font-size:0.9em;';
 									)}
 									<div class="card-text" style={cardTextStyle}>
 										<div class="card-title-row" style={titleRowStyle}>
-										<h4 class="title" style={`${titleStyle}view-transition-name:${post.titleTransitionName};`}>
+										<h4
+											class="title"
+											style={titleStyle}
+											transition:name={post.titleTransitionName}
+											transition:animate="none"
+										>
 											{post.data.title}
 										</h4>
-										<p class="date" style={`${dateStyle}view-transition-name:${post.dateTransitionName};`}>
+										<p class="date" style={dateStyle} transition:name={post.dateTransitionName} transition:animate="none">
 											<FormattedDate date={post.data.pubDate} short />
 										</p>
 									</div>
 									{post.data.subtitle && (
-										<p class="subtitle" style={`${subtitleStyle}view-transition-name:${post.subtitleTransitionName};`}>
+										<p class="subtitle" style={subtitleStyle} transition:name={post.subtitleTransitionName} transition:animate="none">
 											{post.data.subtitle}
 										</p>
 									)}

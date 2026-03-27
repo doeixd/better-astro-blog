@@ -470,7 +470,7 @@ const breadcrumbLd = {
                 </div>
                 <div class="prose">
                     <div class="title">
-                        <div class="date" style={`view-transition-name: ${dateTransitionName};`}>
+                        <div class="date" transition:name={dateTransitionName} transition:animate="none">
                             <FormattedDate date={pubDate} />
                             {
                                 readingTime && (
@@ -489,12 +489,8 @@ const breadcrumbLd = {
                                 )
                             }
                         </div>
-                        <h1 style={`view-transition-name: ${titleTransitionName};`}>{title}</h1>
-                        {subtitle && (
-                            <p class="subtitle" style={`view-transition-name: ${subtitleTransitionName};`}>
-                                {subtitle}
-                            </p>
-                        )}
+                        <h1 transition:name={titleTransitionName} transition:animate="none">{title}</h1>
+                        {subtitle && <p class="subtitle" transition:name={subtitleTransitionName} transition:animate="none">{subtitle}</p>}
                         {
                             tags.length > 0 && (
                                 <div class="tags">
