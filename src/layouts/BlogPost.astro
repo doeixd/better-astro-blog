@@ -1,412 +1,498 @@
 ---
-import { getImage, Picture } from 'astro:assets';
-import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import Header from '../components/Header.astro';
-import LoadingIndicator from '../components/LoadingIndicator.astro';
-import { SITE_TITLE, AUTHOR_NAME, AUTHOR_URL } from '../consts';
+import { getImage, Picture } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import Header from "../components/Header.astro";
+import LoadingIndicator from "../components/LoadingIndicator.astro";
+import { SITE_TITLE, AUTHOR_NAME, AUTHOR_URL } from "../consts";
 
 const basePath = import.meta.env.BASE_URL;
 
-type Props = CollectionEntry<'blog'>['data'] & {
-	readingTime?: number;
-	wordCount?: number;
+type Props = CollectionEntry<"blog">["data"] & {
+    readingTime?: number;
+    wordCount?: number;
 };
 
 const {
-	title,
-	subtitle,
-	description,
-	pubDate,
-	updatedDate,
-	heroImage,
-	heroImageAlt = '',
-	author,
-	tags = [],
-	category,
-	readingTime,
-	wordCount,
+    title,
+    subtitle,
+    description,
+    pubDate,
+    updatedDate,
+    heroImage,
+    heroImageAlt = "",
+    author,
+    tags = [],
+    category,
+    readingTime,
+    wordCount,
 } = Astro.props;
 
 const resolvedAuthor = author || AUTHOR_NAME;
 const heroTransitionName = `post-image-${slugifyForTransition(Astro.url.pathname)}`;
 const heroDisplayWidth = heroImage ? Math.min(heroImage.width, 980) : 980;
-const heroWidths = heroImage ? [480, 720, 980].filter((width) => width < heroImage.width).concat(heroImage.width) : [];
+const heroWidths = heroImage
+    ? [480, 720, 980]
+          .filter((width) => width < heroImage.width)
+          .concat(heroImage.width)
+    : [];
 const heroPlaceholder = heroImage
-	? await getImage({
-			src: heroImage,
-			width: 48,
-			format: 'webp',
-			quality: 30,
-		})
-	: null;
+    ? await getImage({
+          src: heroImage,
+          width: 48,
+          format: "webp",
+          quality: 30,
+      })
+    : null;
 const heroPreload = heroImage
-	? await getImage({
-			src: heroImage,
-			width: Math.min(heroDisplayWidth, 720),
-			format: 'webp',
-			quality: 75,
-		})
-	: null;
-const articleBlurStripCount = 11;
-const articleBlurMax = 4;
-const articleBlurPower = 2.64;
-const articleBlurMidPower = 1.68;
-const articleBlurMidWeight = 0.48;
-const articleBlurStrips = Array.from({ length: articleBlurStripCount }, (_, index) => {
-	const progress = index / (articleBlurStripCount - 1);
-	const curve =
-		(1 - articleBlurMidWeight) * progress ** articleBlurPower +
-		articleBlurMidWeight * progress ** articleBlurMidPower;
-	const blur = Number((articleBlurMax * curve).toFixed(3));
-	return index > 0 && blur === 0 ? 0.01 : blur;
-});
+    ? await getImage({
+          src: heroImage,
+          width: Math.min(heroDisplayWidth, 720),
+          format: "webp",
+          quality: 75,
+      })
+    : null;
+const articleBlurStripCount = 15;
+const articleBlurMax = 2;
+const articleBlurPower = 2;
+const articleBlurMidPower = 1.8;
+const articleBlurMidWeight = 0.42;
+const articleBlurStrips = Array.from(
+    { length: articleBlurStripCount },
+    (_, index) => {
+        const progress = index / (articleBlurStripCount - 1);
+        const curve =
+            (1 - articleBlurMidWeight) * progress ** articleBlurPower +
+            articleBlurMidWeight * progress ** articleBlurMidPower;
+        const blur = Number((articleBlurMax * curve).toFixed(3));
+        return index > 0 && blur === 0 ? 0.01 : blur;
+    },
+);
 
 function slugifyForTransition(value: string) {
-	return value.replace(/^\/+|\/+$/g, '').replace(/[^a-zA-Z0-9_-]+/g, '-');
+    return value.replace(/^\/+|\/+$/g, "").replace(/[^a-zA-Z0-9_-]+/g, "-");
 }
 
 // Derive the auto-generated OG image URL from the current page path
-const slug = Astro.url.pathname.replace(/^\/blog\//, '').replace(/\/$/, '');
+const slug = Astro.url.pathname.replace(/^\/blog\//, "").replace(/\/$/, "");
 const ogImageUrl = `${basePath}og/${slug}.png`;
 
 // Rich JSON-LD for search engines and Google News
 const jsonLd = {
-	'@context': 'https://schema.org',
-	'@type': 'BlogPosting',
-	mainEntityOfPage: {
-		'@type': 'WebPage',
-		'@id': Astro.url.toString(),
-	},
-	headline: title,
-	...(subtitle && { alternativeHeadline: subtitle }),
-	description,
-	datePublished: pubDate.toISOString(),
-	...(updatedDate && { dateModified: updatedDate.toISOString() }),
-	...(heroImage && {
-		image: {
-			'@type': 'ImageObject',
-			url: new URL(heroImage.src, Astro.site).toString(),
-			width: heroImage.width,
-			height: heroImage.height,
-		},
-	}),
-	author: {
-		'@type': 'Person',
-		name: resolvedAuthor,
-		...(AUTHOR_URL && { url: AUTHOR_URL }),
-	},
-	publisher: {
-		'@type': 'Organization',
-		name: SITE_TITLE,
-		...(Astro.site && {
-			logo: {
-				'@type': 'ImageObject',
-				url: new URL(`${basePath}favicon.svg`, Astro.site).toString(),
-			},
-		}),
-	},
-	url: Astro.url.toString(),
-	isAccessibleForFree: true,
-	...(tags.length > 0 && { keywords: tags.join(', ') }),
-	...(category && { articleSection: category }),
-	...(wordCount && { wordCount }),
-	...(readingTime && { timeRequired: `PT${readingTime}M` }),
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": Astro.url.toString(),
+    },
+    headline: title,
+    ...(subtitle && { alternativeHeadline: subtitle }),
+    description,
+    datePublished: pubDate.toISOString(),
+    ...(updatedDate && { dateModified: updatedDate.toISOString() }),
+    ...(heroImage && {
+        image: {
+            "@type": "ImageObject",
+            url: new URL(heroImage.src, Astro.site).toString(),
+            width: heroImage.width,
+            height: heroImage.height,
+        },
+    }),
+    author: {
+        "@type": "Person",
+        name: resolvedAuthor,
+        ...(AUTHOR_URL && { url: AUTHOR_URL }),
+    },
+    publisher: {
+        "@type": "Organization",
+        name: SITE_TITLE,
+        ...(Astro.site && {
+            logo: {
+                "@type": "ImageObject",
+                url: new URL(`${basePath}favicon.svg`, Astro.site).toString(),
+            },
+        }),
+    },
+    url: Astro.url.toString(),
+    isAccessibleForFree: true,
+    ...(tags.length > 0 && { keywords: tags.join(", ") }),
+    ...(category && { articleSection: category }),
+    ...(wordCount && { wordCount }),
+    ...(readingTime && { timeRequired: `PT${readingTime}M` }),
 };
 
 // Breadcrumb JSON-LD for search results
 const breadcrumbLd = {
-	'@context': 'https://schema.org',
-	'@type': 'BreadcrumbList',
-	itemListElement: [
-		{
-			'@type': 'ListItem',
-			position: 1,
-			name: 'Home',
-			item: Astro.site?.toString(),
-		},
-		{
-			'@type': 'ListItem',
-			position: 2,
-			name: 'Blog',
-			item: new URL(`${basePath}blog/`, Astro.site).toString(),
-		},
-		{
-			'@type': 'ListItem',
-			position: 3,
-			name: title,
-		},
-	],
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: Astro.site?.toString(),
+        },
+        {
+            "@type": "ListItem",
+            position: 2,
+            name: "Blog",
+            item: new URL(`${basePath}blog/`, Astro.site).toString(),
+        },
+        {
+            "@type": "ListItem",
+            position: 3,
+            name: title,
+        },
+    ],
 };
 ---
 
 <html lang="en">
-	<head>
-		<BaseHead
-			title={title}
-			description={description}
-			image={heroImage}
-			imageAlt={heroImageAlt}
-			ogImageUrl={ogImageUrl}
-			type="article"
-			publishedTime={pubDate}
-			modifiedTime={updatedDate}
-			author={resolvedAuthor}
-			tags={tags}
-			category={category}
-		/>
-		{heroPreload && <link rel="preload" as="image" href={heroPreload.src} type="image/webp" fetchpriority="high" />}
-		<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-		<script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
-		<style>
-			:root {
-				--post-width: 720px;
-				--post-hero-width: 980px;
-				--post-page-gutter: 2rem;
-				--post-scroll-fade-height: 104px;
-			}
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: min(var(--post-hero-width), calc(100% - var(--post-page-gutter)));
-				max-width: 100%;
-				aspect-ratio: var(--hero-aspect-ratio, 2 / 1);
-				background:
-					linear-gradient(135deg, rgba(var(--gray-light), 0.9), rgba(var(--gray), 0.18)),
-					var(--hero-placeholder-url, none) center/cover no-repeat;
-				border-radius: 12px;
-				overflow: hidden;
-				position: relative;
-				margin: 0 auto;
-				contain: layout paint;
-			}
-			.hero-image::before {
-				content: '';
-				position: absolute;
-				inset: 0;
-				background: var(--hero-placeholder-url, none) center/cover no-repeat;
-				filter: blur(28px);
-				transform: scale(1.06);
-				opacity: 0.85;
-				z-index: 0;
-			}
-			.hero-image > :global(picture) {
-				display: block;
-				position: relative;
-				z-index: 1;
-			}
-			.hero-image > :global(picture) > :global(img) {
-				display: block;
-				margin: 0;
-				box-shadow: var(--box-shadow);
-				width: 100%;
-				height: auto;
-				opacity: 0;
-				transform: scale(1.01);
-				transition: opacity 220ms ease-out, transform 220ms ease-out;
-			}
-			.hero-image > :global(picture) > :global(img.loaded) {
-				opacity: 1;
-				transform: scale(1);
-			}
-			.prose {
-				width: var(--post-width);
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.article-scroll-fade {
-				--article-scroll-fade-height-current: var(--post-scroll-fade-height);
-				position: fixed;
-				left: 50%;
-				bottom: 0;
-				transform: translateX(-50%);
-				width: min(calc(var(--post-width) + 2rem), calc(100vw - 2rem));
-				height: var(--article-scroll-fade-height-current);
-				pointer-events: none;
-				z-index: 4;
-				overflow: hidden;
-				opacity: 0;
-				visibility: hidden;
-				transition: opacity 220ms ease, visibility 220ms ease;
-			}
-			body[data-article-scroll-fade='visible'] .article-scroll-fade {
-				opacity: 1;
-				visibility: visible;
-			}
-			.article-scroll-fade::after {
-				content: '';
-				position: absolute;
-				inset: auto 0 0;
-				height: 32px;
-				background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.82));
-			}
-			.article-scroll-fade__strips {
-				display: flex;
-				flex-direction: column;
-				height: 100%;
-			}
-			.article-scroll-fade__strip {
-				flex: 1 1 0;
-				margin-top: -6px;
-				backdrop-filter: blur(var(--strip-blur));
-				-webkit-backdrop-filter: blur(var(--strip-blur));
-				mask-image: linear-gradient(to bottom, transparent 0%, black 28%, black 72%, transparent 100%);
-				-webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 28%, black 72%, transparent 100%);
-			}
-			.article-scroll-fade__strip:first-child {
-				margin-top: 0;
-				height: 22px;
-				flex-basis: 22px;
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.subtitle {
-				margin: -0.25em 0 0.75em;
-				font-size: 1.25rem;
-				color: rgb(var(--gray));
-				font-style: italic;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-			.reading-time {
-				color: rgb(var(--gray));
-				font-size: 0.875em;
-			}
-			.tags {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.5em;
-				justify-content: center;
-				margin-top: 0.5em;
-			}
-			.tags a {
-				font-size: 0.8em;
-				padding: 0.2em 0.6em;
-				border-radius: 4px;
-				background: rgb(var(--gray-light));
-				color: rgb(var(--gray-dark));
-				text-decoration: none;
-			}
-			.tags a:hover {
-				background: var(--accent);
-				color: white;
-			}
-			@media (max-width: 720px) {
-				.article-scroll-fade {
-					--article-scroll-fade-height-current: 84px;
-					width: calc(100vw - 1rem);
-				}
-			}
-		</style>
-		<script>
-			document.querySelectorAll('.hero-image img').forEach((img) => {
-				if (img instanceof HTMLImageElement && img.complete) {
-					img.classList.add('loaded');
-				} else {
-					img.addEventListener('load', (e) => {
-						(e.target as HTMLElement).classList.add('loaded');
-					}, { once: true });
-				}
-			});
+    <head>
+        <BaseHead
+            title={title}
+            description={description}
+            image={heroImage}
+            imageAlt={heroImageAlt}
+            ogImageUrl={ogImageUrl}
+            type="article"
+            publishedTime={pubDate}
+            modifiedTime={updatedDate}
+            author={resolvedAuthor}
+            tags={tags}
+            category={category}
+        />
+        {
+            heroPreload && (
+                <link
+                    rel="preload"
+                    as="image"
+                    href={heroPreload.src}
+                    type="image/webp"
+                    fetchpriority="high"
+                />
+            )
+        }
+        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(breadcrumbLd)}
+        />
+        <style>
+            :root {
+                --post-width: 720px;
+                --post-hero-width: 980px;
+                --post-page-gutter: 2rem;
+                --post-scroll-fade-height: 80px;
+            }
+            main {
+                width: calc(100% - 2em);
+                max-width: 100%;
+                margin: 0;
+            }
+            .hero-image {
+                width: min(
+                    var(--post-hero-width),
+                    calc(100% - var(--post-page-gutter))
+                );
+                max-width: 100%;
+                aspect-ratio: var(--hero-aspect-ratio, 2 / 1);
+                background:
+                    linear-gradient(
+                        135deg,
+                        rgba(var(--gray-light), 0.9),
+                        rgba(var(--gray), 0.18)
+                    ),
+                    var(--hero-placeholder-url, none) center/cover no-repeat;
+                border-radius: 12px;
+                overflow: hidden;
+                position: relative;
+                margin: 0 auto;
+                contain: layout paint;
+            }
+            .hero-image::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: var(--hero-placeholder-url, none) center/cover
+                    no-repeat;
+                filter: blur(28px);
+                transform: scale(1.06);
+                opacity: 0.85;
+                z-index: 0;
+            }
+            .hero-image > :global(picture) {
+                display: block;
+                position: relative;
+                z-index: 1;
+            }
+            .hero-image > :global(picture) > :global(img) {
+                display: block;
+                margin: 0;
+                box-shadow: var(--box-shadow);
+                width: 100%;
+                height: auto;
+                opacity: 0;
+                transform: scale(1.01);
+                transition:
+                    opacity 220ms ease-out,
+                    transform 220ms ease-out;
+            }
+            .hero-image > :global(picture) > :global(img.loaded) {
+                opacity: 1;
+                transform: scale(1);
+            }
+            .prose {
+                width: var(--post-width);
+                max-width: calc(100% - 2em);
+                margin: auto;
+                padding: 1em;
+                color: rgb(var(--gray-dark));
+            }
+            .article-scroll-fade {
+                --article-scroll-fade-height-current: var(
+                    --post-scroll-fade-height
+                );
+                position: fixed;
+                left: 50%;
+                bottom: 0;
+                transform: translateX(-50%);
+                width: min(calc(var(--post-width) + 2rem), calc(100vw - 2rem));
+                height: var(--article-scroll-fade-height-current);
+                pointer-events: none;
+                z-index: 4;
+                overflow: hidden;
+                opacity: 0;
+                visibility: hidden;
+                transition:
+                    opacity 220ms ease,
+                    visibility 220ms ease;
+            }
+            body[data-article-scroll-fade="visible"] .article-scroll-fade {
+                opacity: 1;
+                visibility: visible;
+            }
+            .article-scroll-fade::after {
+                content: "";
+                position: absolute;
+                inset: auto 0 0;
+                height: 32px;
+                background: linear-gradient(
+                    to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0.82)
+                );
+            }
+            .article-scroll-fade__strips {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .article-scroll-fade__strip {
+                flex: 1 1 0;
+                margin-top: -6px;
+                backdrop-filter: blur(var(--strip-blur));
+                -webkit-backdrop-filter: blur(var(--strip-blur));
+                mask-image: linear-gradient(
+                    to bottom,
+                    transparent 0%,
+                    black 28%,
+                    black 72%,
+                    transparent 100%
+                );
+                -webkit-mask-image: linear-gradient(
+                    to bottom,
+                    transparent 0%,
+                    black 28%,
+                    black 72%,
+                    transparent 100%
+                );
+            }
+            .article-scroll-fade__strip:first-child {
+                margin-top: 0;
+                height: 22px;
+                flex-basis: 22px;
+            }
+            .title {
+                margin-bottom: 1em;
+                padding: 1em 0;
+                text-align: center;
+                line-height: 1;
+            }
+            .title h1 {
+                margin: 0 0 0.5em 0;
+            }
+            .subtitle {
+                margin: -0.25em 0 0.75em;
+                font-size: 1.25rem;
+                color: rgb(var(--gray));
+                font-style: italic;
+            }
+            .date {
+                margin-bottom: 0.5em;
+                color: rgb(var(--gray));
+            }
+            .last-updated-on {
+                font-style: italic;
+            }
+            .reading-time {
+                color: rgb(var(--gray));
+                font-size: 0.875em;
+            }
+            .tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5em;
+                justify-content: center;
+                margin-top: 0.5em;
+            }
+            .tags a {
+                font-size: 0.8em;
+                padding: 0.2em 0.6em;
+                border-radius: 4px;
+                background: rgb(var(--gray-light));
+                color: rgb(var(--gray-dark));
+                text-decoration: none;
+            }
+            .tags a:hover {
+                background: var(--accent);
+                color: white;
+            }
+            @media (max-width: 720px) {
+                .article-scroll-fade {
+                    --article-scroll-fade-height-current: 84px;
+                    width: calc(100vw - 1rem);
+                }
+            }
+        </style>
+        <script>
+            document.querySelectorAll(".hero-image img").forEach((img) => {
+                if (img instanceof HTMLImageElement && img.complete) {
+                    img.classList.add("loaded");
+                } else {
+                    img.addEventListener(
+                        "load",
+                        (e) => {
+                            (e.target as HTMLElement).classList.add("loaded");
+                        },
+                        { once: true },
+                    );
+                }
+            });
 
-			const updateArticleScrollFade = () => {
-				const prose = document.querySelector('.prose');
-				if (!(prose instanceof HTMLElement)) {
-					return;
-				}
+            const updateArticleScrollFade = () => {
+                const prose = document.querySelector(".prose");
+                if (!(prose instanceof HTMLElement)) {
+                    return;
+                }
 
-				const proseRect = prose.getBoundingClientRect();
-				const fadeHeight = parseFloat(getComputedStyle(prose).getPropertyValue('--article-scroll-fade-height-current')) || 104;
-				const hasStartedScrolling = window.scrollY > 8;
-				const articleStillBehindFade = proseRect.bottom > window.innerHeight - fadeHeight;
+                const proseRect = prose.getBoundingClientRect();
+                const fadeHeight =
+                    parseFloat(
+                        getComputedStyle(prose).getPropertyValue(
+                            "--article-scroll-fade-height-current",
+                        ),
+                    ) || 104;
+                const hasStartedScrolling = window.scrollY > 8;
+                const articleStillBehindFade =
+                    proseRect.bottom > window.innerHeight - fadeHeight;
 
-				document.body.dataset.articleScrollFade = hasStartedScrolling && articleStillBehindFade
-					? 'visible'
-					: 'hidden';
-			};
+                document.body.dataset.articleScrollFade =
+                    hasStartedScrolling && articleStillBehindFade
+                        ? "visible"
+                        : "hidden";
+            };
 
-			updateArticleScrollFade();
-			window.addEventListener('scroll', updateArticleScrollFade, { passive: true });
-			window.addEventListener('resize', updateArticleScrollFade);
-		</script>
-	</head>
+            updateArticleScrollFade();
+            window.addEventListener("scroll", updateArticleScrollFade, {
+                passive: true,
+            });
+            window.addEventListener("resize", updateArticleScrollFade);
+        </script>
+    </head>
 
-	<body>
-		<LoadingIndicator />
-		<Header />
-		<main id="main-content">
-			<article>
-				<div
-					class="hero-image"
-					style={`view-transition-name: ${heroTransitionName}; --hero-aspect-ratio: ${heroImage ? `${heroImage.width} / ${heroImage.height}` : '2 / 1'}; --hero-placeholder-url: ${heroPlaceholder ? `url(${heroPlaceholder.src})` : 'none'}; --post-hero-width: ${heroDisplayWidth}px;`}
-				>
-					{heroImage && <Picture
-					src={heroImage}
-					formats={['webp', 'avif']}
-					widths={heroWidths}
-					sizes={`(max-width: 760px) calc(100vw - 2rem), ${heroDisplayWidth}px`}
-					width={heroImage.width}
-					height={heroImage.height}
-					alt={heroImageAlt}
-					loading="eager"
-					decoding="sync"
-					fetchpriority="high"
-				/>}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{readingTime && <span class="reading-time"> &middot; {readingTime} min read</span>}
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						{subtitle && <p class="subtitle">{subtitle}</p>}
-						{tags.length > 0 && (
-							<div class="tags">
-								{tags.map((tag) => (
-									<a href={`${basePath}blog/tags/${tag}/`}>{tag}</a>
-								))}
-							</div>
-						)}
-						<hr />
-					</div>
-					<slot />
-				</div>
-				<div class="article-scroll-fade" aria-hidden="true">
-					<div class="article-scroll-fade__strips">
-						{articleBlurStrips.map((blur) => (
-							<div class="article-scroll-fade__strip" style={`--strip-blur: ${blur}px;`} />
-						))}
-					</div>
-				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
+    <body>
+        <LoadingIndicator />
+        <Header />
+        <main id="main-content">
+            <article>
+                <div
+                    class="hero-image"
+                    style={`view-transition-name: ${heroTransitionName}; --hero-aspect-ratio: ${heroImage ? `${heroImage.width} / ${heroImage.height}` : "2 / 1"}; --hero-placeholder-url: ${heroPlaceholder ? `url(${heroPlaceholder.src})` : "none"}; --post-hero-width: ${heroDisplayWidth}px;`}
+                >
+                    {
+                        heroImage && (
+                            <Picture
+                                src={heroImage}
+                                formats={["webp", "avif"]}
+                                widths={heroWidths}
+                                sizes={`(max-width: 760px) calc(100vw - 2rem), ${heroDisplayWidth}px`}
+                                width={heroImage.width}
+                                height={heroImage.height}
+                                alt={heroImageAlt}
+                                loading="eager"
+                                decoding="sync"
+                                fetchpriority="high"
+                            />
+                        )
+                    }
+                </div>
+                <div class="prose">
+                    <div class="title">
+                        <div class="date">
+                            <FormattedDate date={pubDate} />
+                            {
+                                readingTime && (
+                                    <span class="reading-time">
+                                        {" "}
+                                        &middot; {readingTime} min read
+                                    </span>
+                                )
+                            }
+                            {
+                                updatedDate && (
+                                    <div class="last-updated-on">
+                                        Last updated on{" "}
+                                        <FormattedDate date={updatedDate} />
+                                    </div>
+                                )
+                            }
+                        </div>
+                        <h1>{title}</h1>
+                        {subtitle && <p class="subtitle">{subtitle}</p>}
+                        {
+                            tags.length > 0 && (
+                                <div class="tags">
+                                    {tags.map((tag) => (
+                                        <a
+                                            href={`${basePath}blog/tags/${tag}/`}
+                                        >
+                                            {tag}
+                                        </a>
+                                    ))}
+                                </div>
+                            )
+                        }
+                        <hr />
+                    </div>
+                    <slot />
+                </div>
+                <div class="article-scroll-fade" aria-hidden="true">
+                    <div class="article-scroll-fade__strips">
+                        {
+                            articleBlurStrips.map((blur) => (
+                                <div
+                                    class="article-scroll-fade__strip"
+                                    style={`--strip-blur: ${blur}px;`}
+                                />
+                            ))
+                        }
+                    </div>
+                </div>
+            </article>
+        </main>
+        <Footer />
+    </body>
 </html>

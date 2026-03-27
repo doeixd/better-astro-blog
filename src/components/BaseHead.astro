@@ -61,7 +61,7 @@ const resolvedAuthor = author || AUTHOR_NAME;
 />
 <meta name="generator" content={Astro.generator} />
 
-<ClientRouter />
+<ClientRouter fallback="swap" />
 
 <!-- NOTE: Scripts that must run after BOTH initial load and client-side navigation
      should use `document.addEventListener('astro:page-load', ...)` instead of
