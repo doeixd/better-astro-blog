@@ -11,7 +11,10 @@
 	--gray: 96, 115, 159;
 	--gray-light: 229, 233, 240;
 	--gray-dark: 34, 41, 57;
-	--gray-gradient: rgba(var(--gray-light), 50%), #fff;
+	--gray-gradient-start: rgba(var(--gray-light), 0.5);
+	--gray-gradient-end: #fff;
+	--gray-gradient: var(--gray-gradient-start), var(--gray-gradient-end);
+	--gray-gradient-inverse: var(--gray-gradient-end), var(--gray-gradient-start);
 	--header-background: transparent;
 	--header-box-shadow: none;
 	--box-shadow:
