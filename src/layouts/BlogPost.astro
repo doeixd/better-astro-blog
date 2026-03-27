@@ -230,6 +230,12 @@ const breadcrumbLd = {
                 opacity: 0.85;
                 z-index: 0;
             }
+            .hero-image[data-hero-ready="true"]::before {
+                opacity: 0;
+            }
+            .hero-image[data-hero-ready="true"] {
+                background-image: none;
+            }
             .hero-image > :global(picture) {
                 display: block;
                 position: relative;
@@ -373,8 +379,16 @@ const breadcrumbLd = {
                         return;
                     }
 
+                    const heroImage = img.closest(".hero-image");
+                    const markHeroReady = () => {
+                        if (heroImage instanceof HTMLElement) {
+                            heroImage.dataset.heroReady = "true";
+                        }
+                    };
+
                     if (img.complete) {
                         img.classList.add("loaded");
+                        markHeroReady();
                         return;
                     }
 
@@ -387,6 +401,7 @@ const breadcrumbLd = {
                         "load",
                         (e) => {
                             (e.target as HTMLElement).classList.add("loaded");
+                            markHeroReady();
                         },
                         { once: true },
                     );
